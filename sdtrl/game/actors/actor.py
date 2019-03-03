@@ -59,11 +59,12 @@ class Emotion:
 
 
 class Actor:
-    __slots__ = ['emotion', 'personality']
+    __slots__ = ['emotion', 'personality', '_goal']
 
     def __init__(self, personality: Personality):
-        self.emotion = Emotion(0,0,0)
+        self.emotion = Emotion(0, 0, 0)
         self.personality = personality
+        self._goal = None
 
     def act(self): pass
 

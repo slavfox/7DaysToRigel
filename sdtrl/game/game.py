@@ -15,15 +15,23 @@
 # You should have received a copy of the GNU General Public License along
 # with 7 Days to Rigel.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from engine import BaseGame
+from engine import BaseGame, SplashScreen, Color
 from .world import World
 from .entities import Player
-from constants import ROOT_DIR
+from constants import ROOT_DIR, __version__, CREDITS
 
 
 class SevenDaysToRigel(BaseGame):
     TITLE = "7 Days to Rigel"
     FONT = ROOT_DIR/'assets'/'terminal.png'
+    SPLASH_SCREEN = SplashScreen(
+        title=f"v{__version__}. Developed for 7DRL'19.",
+        # title_art=SPLASH_SCREEN,
+        logo=ROOT_DIR / 'assets' / '7dtr_logo.png',
+        credits=CREDITS,
+        title_color=Color(129, 162, 190),
+        credits_color=Color(197, 200, 198)
+    )
 
     def make_world(self) -> World:
         return World(80, 50)

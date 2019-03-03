@@ -16,10 +16,12 @@
 # with 7 Days to Rigel.  If not, see <https://www.gnu.org/licenses/>.
 from tcod import Color
 from .game import BaseGame, BaseWorld
-from .helpers import Point, Map, Color, CellContents, MemorizedCell, Pointlike
+from .helpers import Point, Map, Color, CellContents, MemorizedCell, \
+    Pointlike, SplashScreen
 from .entities import Entity
 from .tiles import Tile
 from .ui import UI
 
 __all__ = ['BaseGame', 'Map', 'Entity', 'Tile', 'UI', 'BaseWorld',
+           'SplashScreen',
            'Color', 'CellContents', 'MemorizedCell', 'Pointlike']

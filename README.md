@@ -34,6 +34,11 @@ notice of that, where applicable.
 
 The font used is provided by [python-libtcod] and is in the public domain.
 
+The starship in the game's logo is was made by [David Fuchs] and is used here
+ under the [Creative Commons Attribution-ShareAlike 4.0 International] license.
+
+
+
 [7DRL2019]: https://itch.io/jam/7drl-challenge-2019
 [slavfox.io]: https://slavfox.io/
 [python-libtcod]: https://github.com/libtcod/python-tcod
@@ -45,3 +50,5 @@ The font used is provided by [python-libtcod] and is in the public domain.
 [Mozilla Public License, v. 2.0.]: https://www.mozilla.org/en-US/MPL/2.0/
 [Distribution of a Larger Work (3.3)]: 
   https://www.mozilla.org/en-US/MPL/2.0/#distribution-of-a-larger-work
+[Creative Commons Attribution-ShareAlike 4.0 International]:
+  https://creativecommons.org/licenses/by-sa/4.0/deed.en

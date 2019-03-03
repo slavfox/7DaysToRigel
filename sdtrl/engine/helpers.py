@@ -22,14 +22,70 @@
 from __future__ import annotations
 from typing import NamedTuple, TYPE_CHECKING, List, Tuple, Optional, Union, \
     Sequence
-from tcod import Color
+from dataclasses import dataclass
+from enum import Enum
+from textwrap import wrap
+
+from tcod import Color, image_load
 
 if TYPE_CHECKING:
+    from tcod.image import Image
+    from pathlib import Path
     from .tiles import Tile
     from .entities import Entity
 
 __all__ = ['Color', 'Point', 'CellContents', 'Map', 'MemorizedCell',
-           'Pointlike']
+           'Pointlike', 'GameState', 'SplashScreen']
+
+
+@dataclass
+class SplashScreen:
+    title: str
+    logo: Image
+    credits: str
+    credits_color: Color
+    title_color: Color
+
+    # noinspection PyShadowingBuiltins
+    def __init__(self, title: str, logo: Path, credits: str,
+                 title_color: Optional[Color] = None,
+                 credits_color: Optional[Color] = None,
+                 ):
+        self.title = title
+        self.logo = image_load(logo.as_posix())
+        self.credits = credits
+        self._centered_title: str = None
+        self._centered_credits: str = None
+        self.title_color = title_color
+        self.credits_color = credits_color
+
+    def get_centered_credits(self, width: int) -> str:
+        if self._centered_credits is None:
+            self._centered_credits = "\n".join(
+                line.center(width) for line in self.credits.split('\n')
+            )
+        return self._centered_credits
+
+    def get_centered_title(self, width: int) -> str:
+        if self._centered_title is None:
+            self._centered_title = "\n".join(
+                line.center(width) for line in wrap(self.title, width)
+            )
+        return self._centered_title
+
+    # def get_centered_title_art(self, width: int) -> str:
+    #     if self._centered_title_art is None:
+    #         lines = self.title_art.split('\n')
+    #         max_width = max(len(line) for line in lines)
+    #         self._centered_title_art = "\n".join(
+    #             line.ljust(max_width).center(width) for line in lines
+    #         )
+    #     return self._centered_title_art
+
+
+class GameState(Enum):
+    SPLASH = 0
+    GAME = 1
 
 
 class Map(list):

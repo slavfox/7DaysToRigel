@@ -17,13 +17,15 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Iterable, Union, TYPE_CHECKING, Tuple
+
 import tcod
-from .helpers import CellContents, Map
+from .helpers import CellContents, Map, GameState
 
 from .ui import UI
+
 if TYPE_CHECKING:
     from pathlib import Path
-    from .helpers import Pointlike
+    from .helpers import Pointlike, SplashScreen
     from .entities import Entity
     from .tiles import Tile
 
@@ -71,21 +73,26 @@ class BaseGame(ABC):
 
     Remember to set the TITLE.
     """
-    __slots__ = ['console', 'world', 'ui', 'player']
+    __slots__ = ['console', 'world', 'ui', 'player', 'state']
 
     TITLE: str = None
     FONT: Path = None
+    SPLASH_SCREEN: SplashScreen = None
 
     def __init__(self):
         if self.TITLE is None:
             raise ValueError("You must set a TITLE "
                              "when inheriting from BaseGame!")
         if self.FONT is None:
-            raise ValueError("You must set a FONT path"
+            raise ValueError("You must set a FONT path "
+                             "when inheriting from BaseGame!")
+        if self.SPLASH_SCREEN is None:
+            raise ValueError("You must set a SPLASH_SCREEN "
                              "when inheriting from BaseGame!")
         self.world: BaseWorld = self.make_world()
         self.player: Entity = self.create_player_character()
         self.world.entities.append(self.player)
+        self.state = GameState.SPLASH
         self.ui: UI = UI(self)
         self.console: tcod.tcod.console.Console = self.ui.init_root()
 
@@ -98,7 +105,6 @@ class BaseGame(ABC):
 
     def run(self):
         while not tcod.console_is_window_closed():
-            print(tcod.console_is_window_closed())
             self.tick()
             self.ui.draw()
         return

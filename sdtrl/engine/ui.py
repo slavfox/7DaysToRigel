@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, List
 
 import tcod
-from .helpers import Map, MemorizedCell
+from .helpers import Map, MemorizedCell, GameState
 
 if TYPE_CHECKING:
     from .game import BaseGame
@@ -59,6 +59,7 @@ class UI:
         self.memory: Map[List[MemorizedCell]] = Map(
             self.game.world.map.width, self.game.world.map.height
         )
+        self.state = GameState.SPLASH
 
     def init_root(self) -> tcod.tcod.console.Console:
         self.console = tcod.console_init_root(
@@ -70,6 +71,12 @@ class UI:
         return self.console
 
     def draw(self):
+        if self.game.state == GameState.SPLASH:
+            self.draw_splash_screen()
+        else:
+            self.draw_game()
+
+    def draw_game(self):
         for y in range(self.game.world.map.height):
             for x in range(self.game.world.map.width):
                 self.draw_cell(x, y)
@@ -120,4 +127,49 @@ class UI:
         self.console.fg[x, y] = fg_color
         self.console.bg[x, y] = bg_color
 
+    def draw_splash_screen(self):
+        # title_height = self.console.print_box(
+        #     0, 0, self.SCREEN_WIDTH, self.SCREEN_HEIGHT,
+        #     self.game.SPLASH_SCREEN.get_centered_title_art(self.SCREEN_WIDTH),
+        #     fg=tuple(self.game.SPLASH_SCREEN.title_art_color)
+        # )
+        logo_height = 20
+        logo_offset = 1
+        logo_width = int(
+            (self.game.SPLASH_SCREEN.logo.width /
+             self.game.SPLASH_SCREEN.logo.height) * logo_height
+        )
+        self.game.SPLASH_SCREEN.logo.blit_rect(
+            self.console,
+            (self.SCREEN_WIDTH - logo_width) // 2, logo_offset,
+            logo_width, logo_height,
+            tcod.BKGND_SET
+        )
+        centered_title = self.game.SPLASH_SCREEN.get_centered_title(
+            self.SCREEN_WIDTH
+        )
+        self.console.print_box(
+            0, logo_height + logo_offset * 2,
+            self.SCREEN_WIDTH, centered_title.count('\n') + 1,
+            centered_title,
+            fg=tuple(self.game.SPLASH_SCREEN.title_color)
+        )
+        credits_height = self.game.SPLASH_SCREEN.credits.count('\n') + 1
+        self.console.print_box(
+            0, self.SCREEN_HEIGHT-(credits_height + 1),
+            self.SCREEN_WIDTH, credits_height,
+            self.game.SPLASH_SCREEN.get_centered_credits(self.SCREEN_WIDTH),
+            fg=tuple(self.game.SPLASH_SCREEN.credits_color)
+        )
+        tcod.console_blit(self.console, 0, 0, self.SCREEN_WIDTH,
+                          self.SCREEN_HEIGHT, self.console, 0, 0)
+        tcod.console_flush()
+
+        top_offset = logo_height + logo_offset + 2
+        bottom_offset = credits_height + 1
+        remaining = self.SCREEN_HEIGHT - top_offset - bottom_offset - 1
+        self.console.print_frame(
+            3, top_offset,
+            self.SCREEN_WIDTH - 6, remaining
+        )
 
