@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License along
 # with 7 Days to Rigel.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Callable, Tuple
+from collections import OrderedDict
 
 import tcod
 from .helpers import Map, MemorizedCell, GameState
@@ -23,16 +24,28 @@ from .helpers import Map, MemorizedCell, GameState
 if TYPE_CHECKING:
     from .game import BaseGame
     from .helpers import CellContents
+    from pathlib import Path
+    from .helpers import SplashScreen
 
 
 class UI:
     SCREEN_WIDTH = 80
     SCREEN_HEIGHT = 50
 
+    LOGO_HEIGHT = 20
+
+    TITLE: str = None
+    FONT: Path = None
+    FONT_SMALL: Path = None
+    SPLASH_SCREEN: SplashScreen = None
+
     def __init__(self, game: BaseGame,
                  default_bg_color: tcod.Color = None,
                  default_fg_color: tcod.Color = None,
-                 default_void_color: tcod.Color = None):
+                 default_void_color: tcod.Color = None,
+                 main_menu_options: OrderedDict[
+                     str, Tuple[tcod.Color, Callable]
+                 ] = None):
 
         if default_fg_color is None:
             self.default_fg_color = tcod.Color(255, 255, 255)
@@ -49,8 +62,13 @@ class UI:
         else:
             self.default_void_color = default_void_color
 
+        if main_menu_options is None:
+            self.main_menu_options = OrderedDict()
+        else:
+            self.main_menu_options = main_menu_options
+
         tcod.console_set_custom_font(
-            fontFile=game.FONT.as_posix(),
+            fontFile=self.FONT.as_posix(),
             nb_char_horiz=16,
             nb_char_vertic=16
         )
@@ -60,21 +78,39 @@ class UI:
             self.game.world.map.width, self.game.world.map.height
         )
         self.state = GameState.SPLASH
+        self._end_credits = False
+        self._selected_option_index = 0
+        self._longest_option_length = max(
+            len(opt) for opt in self.main_menu_options
+        )
+        self._main_menu_options_tuple = tuple(self.main_menu_options.keys())
 
     def init_root(self) -> tcod.tcod.console.Console:
         self.console = tcod.console_init_root(
             w=self.SCREEN_WIDTH,
             h=self.SCREEN_HEIGHT,
-            title=self.game.TITLE,
+            title=self.TITLE,
             order='F'
         )
         return self.console
 
-    def draw(self):
-        if self.game.state == GameState.SPLASH:
-            self.draw_splash_screen()
-        else:
-            self.draw_game()
+    def run(self):
+        # self.console.print_box(
+        #     0, self.SCREEN_HEIGHT-(credits_height + 1),
+        #     self.SCREEN_WIDTH, credits_height,
+        #     self.game.SPLASH_SCREEN.get_centered_credits(self.SCREEN_WIDTH),
+        #     fg=tuple(self.game.SPLASH_SCREEN.credits_color),
+        #     bg=(0, 0, 0)
+        # )
+        self.console.clear()
+        while not tcod.console_is_window_closed():
+            if self.state == GameState.SPLASH:
+                self.draw_splash_screen()
+                self.handle_splash_screen_keys()
+            else:
+                self.game.tick()
+                self.draw_game()
+        return
 
     def draw_game(self):
         for y in range(self.game.world.map.height):
@@ -133,43 +169,130 @@ class UI:
         #     self.game.SPLASH_SCREEN.get_centered_title_art(self.SCREEN_WIDTH),
         #     fg=tuple(self.game.SPLASH_SCREEN.title_art_color)
         # )
-        logo_height = 20
-        logo_offset = 1
-        logo_width = int(
-            (self.game.SPLASH_SCREEN.logo.width /
-             self.game.SPLASH_SCREEN.logo.height) * logo_height
+        self.console.clear()
+
+        self.draw_title()
+        top_offset = self.LOGO_HEIGHT + 4
+        # bottom_offset = self.draw_credits() + 1
+        # remaining = self.SCREEN_HEIGHT - top_offset - bottom_offset - 1
+
+        # Have to do it this way because libtcod has a weird interaction with
+        # CP437 characters
+        key_hint1 = f"Choose an option with {chr(18)}"
+        key_hint2 = ", confirm with the Spacebar or Enter"
+        xstart = (self.SCREEN_WIDTH - (len(key_hint1) + len(key_hint2))) // 2
+        self.console.print(
+            xstart, top_offset,
+            key_hint1, fg=(112, 120, 128)
         )
-        self.game.SPLASH_SCREEN.logo.blit_rect(
-            self.console,
-            (self.SCREEN_WIDTH - logo_width) // 2, logo_offset,
-            logo_width, logo_height,
-            tcod.BKGND_SET
+        self.console.print(
+            xstart + len(key_hint1), top_offset,
+            key_hint2, fg=(112, 120, 128)
         )
-        centered_title = self.game.SPLASH_SCREEN.get_centered_title(
-            self.SCREEN_WIDTH
-        )
-        self.console.print_box(
-            0, logo_height + logo_offset * 2,
-            self.SCREEN_WIDTH, centered_title.count('\n') + 1,
-            centered_title,
-            fg=tuple(self.game.SPLASH_SCREEN.title_color)
-        )
-        credits_height = self.game.SPLASH_SCREEN.credits.count('\n') + 1
-        self.console.print_box(
-            0, self.SCREEN_HEIGHT-(credits_height + 1),
-            self.SCREEN_WIDTH, credits_height,
-            self.game.SPLASH_SCREEN.get_centered_credits(self.SCREEN_WIDTH),
-            fg=tuple(self.game.SPLASH_SCREEN.credits_color)
-        )
+        self.draw_main_menu_options(top_offset + 1)
+        self.draw_credits()
+        if not self._end_credits:
+            self._end_credits = tcod.console_credits_render(
+                self.SCREEN_WIDTH - 15, self.SCREEN_HEIGHT - 3, True
+            )
         tcod.console_blit(self.console, 0, 0, self.SCREEN_WIDTH,
                           self.SCREEN_HEIGHT, self.console, 0, 0)
         tcod.console_flush()
 
-        top_offset = logo_height + logo_offset + 2
-        bottom_offset = credits_height + 1
-        remaining = self.SCREEN_HEIGHT - top_offset - bottom_offset - 1
-        self.console.print_frame(
-            3, top_offset,
-            self.SCREEN_WIDTH - 6, remaining
+    def draw_title(self):
+        logo_width = int(
+            (self.SPLASH_SCREEN.logo.width /
+             self.SPLASH_SCREEN.logo.height) * self.LOGO_HEIGHT
         )
+        self.SPLASH_SCREEN.logo.blit_rect(
+            self.console,
+            (self.SCREEN_WIDTH - logo_width) // 2, 1,
+            logo_width, self.LOGO_HEIGHT,
+            tcod.BKGND_SET
+        )
+        centered_title = self.SPLASH_SCREEN.get_centered_title(
+            self.SCREEN_WIDTH
+        )
+        self.console.print_box(
+            0, self.LOGO_HEIGHT + 2,
+            self.SCREEN_WIDTH, centered_title.count('\n') + 1,
+            centered_title,
+            fg=tuple(self.SPLASH_SCREEN.title_color),
+            bg=(0, 0, 0)
+        )
+        return self.LOGO_HEIGHT
 
+    def draw_credits(self):
+        for key, color in self.SPLASH_SCREEN.credits_format_colors.items():
+            tcod.console_set_color_control(key, tuple(color), (0, 0, 0))
+        credits_height = self.SPLASH_SCREEN.credits.count('\n') + 1
+        self.console.print_box(
+            0, self.SCREEN_HEIGHT - (credits_height + 1),
+            self.SCREEN_WIDTH, credits_height,
+            self.SPLASH_SCREEN.get_centered_credits(self.SCREEN_WIDTH),
+            fg=tuple(self.SPLASH_SCREEN.credits_color),
+            bg=(0, 0, 0)
+        )
+        return credits_height
+
+    def draw_main_menu_options(self, yoffset):
+        for i, option in enumerate(self.main_menu_options):
+            fg = self.main_menu_options[option][0]
+            bg = (0, 0, 0)
+            if i == self._selected_option_index:
+                fg, bg = bg, fg
+            yoffset += 1
+            self.console.print_frame(
+                (self.SCREEN_WIDTH - self._longest_option_length - 2) // 2,
+                yoffset,
+                self._longest_option_length + 2,
+                5
+            )
+            yoffset += 1
+            self.console.print_box(
+                (self.SCREEN_WIDTH - self._longest_option_length) // 2, yoffset,
+                self._longest_option_length, 1,
+                " " * self._longest_option_length,
+                fg=fg, bg=bg
+            )
+            yoffset += 1
+            self.console.print_box(
+                (self.SCREEN_WIDTH - self._longest_option_length) // 2, yoffset,
+                self._longest_option_length, 1,
+                option.center(self._longest_option_length),
+                fg=fg, bg=bg
+            )
+            yoffset += 1
+            self.console.print_box(
+                (self.SCREEN_WIDTH - self._longest_option_length) // 2, yoffset,
+                self._longest_option_length, 1,
+                " " * self._longest_option_length,
+                fg=fg, bg=bg
+            )
+            yoffset += 2
+
+    def handle_splash_screen_keys(self):
+        key: tcod.Key = tcod.console_check_for_keypress()
+        if not key:
+            return
+        if key.vk == tcod.KEY_DOWN:
+            self._selected_option_index = min(
+                len(self._main_menu_options_tuple) - 1,
+                self._selected_option_index + 1
+            )
+        elif key.vk == tcod.KEY_UP:
+            self._selected_option_index = max(
+                0, self._selected_option_index - 1
+            )
+        elif key.vk in (tcod.KEY_SPACE, tcod.KEY_ENTER):
+            self.main_menu_options[
+                self._main_menu_options_tuple[self._selected_option_index]
+            ][1]()
+
+    def start_game(self):
+        self.console.clear()
+        self.state = GameState.GAME
+
+    @staticmethod
+    def close_window():
+        tcod.console_is_window_closed = lambda: True

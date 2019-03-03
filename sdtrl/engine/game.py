@@ -16,16 +16,15 @@
 # with 7 Days to Rigel.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import List, Iterable, Union, TYPE_CHECKING, Tuple
+from typing import List, Iterable, Union, TYPE_CHECKING, Tuple, Type
 
 import tcod
-from .helpers import CellContents, Map, GameState
+from .helpers import CellContents, Map
 
 from .ui import UI
 
 if TYPE_CHECKING:
-    from pathlib import Path
-    from .helpers import Pointlike, SplashScreen
+    from .helpers import Pointlike
     from .entities import Entity
     from .tiles import Tile
 
@@ -73,27 +72,14 @@ class BaseGame(ABC):
 
     Remember to set the TITLE.
     """
-    __slots__ = ['console', 'world', 'ui', 'player', 'state']
-
-    TITLE: str = None
-    FONT: Path = None
-    SPLASH_SCREEN: SplashScreen = None
+    __slots__ = ['console', 'world', 'ui', 'player']
+    UI_CLASS: Type[UI] = UI
 
     def __init__(self):
-        if self.TITLE is None:
-            raise ValueError("You must set a TITLE "
-                             "when inheriting from BaseGame!")
-        if self.FONT is None:
-            raise ValueError("You must set a FONT path "
-                             "when inheriting from BaseGame!")
-        if self.SPLASH_SCREEN is None:
-            raise ValueError("You must set a SPLASH_SCREEN "
-                             "when inheriting from BaseGame!")
         self.world: BaseWorld = self.make_world()
         self.player: Entity = self.create_player_character()
         self.world.entities.append(self.player)
-        self.state = GameState.SPLASH
-        self.ui: UI = UI(self)
+        self.ui: UI = self.UI_CLASS(self)
         self.console: tcod.tcod.console.Console = self.ui.init_root()
 
     @abstractmethod
@@ -103,14 +89,8 @@ class BaseGame(ABC):
         """
         ...
 
-    def run(self):
-        while not tcod.console_is_window_closed():
-            self.tick()
-            self.ui.draw()
-        return
-
-    def tick(self):
-        self.handle_keypress()
+    def tick(self, key: Union[tcod.Key, None] = None):
+        self.handle_keypress(key)
 
     def get_visible_entities(self) -> Iterable[Entity]:
         """
@@ -132,6 +112,6 @@ class BaseGame(ABC):
         ...
 
     @abstractmethod
-    def handle_keypress(self): ...
+    def handle_keypress(self, key: Union[tcod.Key, None]): ...
         # key: tcod.Key = tcod.console_check_for_keypress()
 

@@ -17,8 +17,10 @@
 from pathlib import Path
 from typing import NamedTuple
 
+from tcod import COLCTRL_1, COLCTRL_2, COLCTRL_STOP, Color
+
 __all__ = ['version_info', '__version__', 'ROOT_DIR', 'SPLASH_SCREEN',
-           'CREDITS']
+           'CREDITS', 'CREDITS_COLORS']
 
 
 class Version(NamedTuple):
@@ -57,5 +59,14 @@ MM88MMM ,adPPYba,     88aaaaaa8P' 88  ,adPPYb,d8  ,adPPYba, 88
 
 
 '''
-CREDITS = f"Licensed GPL. Copyright (c) Slavfox, 2019.\n" \
-          f"@Slavfoxman   https://slavfox.io/" \
+CREDITS = f"Licensed GPL. Copyright (c) %cSlavfox%c, 2019.\n" \
+          f"%c@Slavfoxman%c   %chttps://slavfox.io/%c\n\n" \
+          f"Logo by David Fuchs, CC BY-SA 4.0." % (
+            COLCTRL_1, COLCTRL_STOP,
+            COLCTRL_2, COLCTRL_STOP, COLCTRL_2, COLCTRL_STOP
+          )
+
+CREDITS_COLORS = {
+    COLCTRL_1: Color(222, 147, 95),
+    COLCTRL_2: Color(129, 162, 190)
+}

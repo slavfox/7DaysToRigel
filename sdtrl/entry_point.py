@@ -17,4 +17,4 @@
 from game.game import SevenDaysToRigel
 
 if __name__ == '__main__':
-    SevenDaysToRigel().run()
+    SevenDaysToRigel().ui.run()

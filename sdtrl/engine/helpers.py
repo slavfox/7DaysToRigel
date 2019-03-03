@@ -21,7 +21,7 @@
 # unpacked.
 from __future__ import annotations
 from typing import NamedTuple, TYPE_CHECKING, List, Tuple, Optional, Union, \
-    Sequence
+    Sequence, Dict
 from dataclasses import dataclass
 from enum import Enum
 from textwrap import wrap
@@ -45,12 +45,18 @@ class SplashScreen:
     credits: str
     credits_color: Color
     title_color: Color
+    credits_format_colors: Dict[int, Color]
 
     # noinspection PyShadowingBuiltins
     def __init__(self, title: str, logo: Path, credits: str,
-                 title_color: Optional[Color] = None,
-                 credits_color: Optional[Color] = None,
+                 title_color: Color = None,
+                 credits_color: Color = None,
+                 credits_format_colors: Dict[int, Color] = None
                  ):
+        if credits_format_colors is None:
+            self.credits_format_colors = {}
+        else:
+            self.credits_format_colors = credits_format_colors
         self.title = title
         self.logo = image_load(logo.as_posix())
         self.credits = credits
