@@ -50,7 +50,7 @@ class Entity(ABC):
                  blocks_sight: bool = False,
                  acts: bool = False,
                  # Visuals
-                 character: str = None,
+                 character: int = None,
                  color: tcod.Color = None):
         self.location: Point = Point(location[0], location[1])
 
@@ -63,7 +63,7 @@ class Entity(ABC):
         # Whether this entity acts on its own
         self.acts: bool = acts
 
-        self.character: str = character
+        self.character: int = character
         self.color: tcod.Color = color
 
 

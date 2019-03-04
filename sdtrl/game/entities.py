@@ -36,7 +36,7 @@ class Creature(Entity):
                  blocks_sight: bool = False,
                  acts: bool = True,
                  # Visuals
-                 character: str = None,
+                 character: int = None,
                  color: Color = None):
         super().__init__(
             name=name,
@@ -62,6 +62,6 @@ class Player(Creature):
             blocks_movement=False,
             blocks_sight=False,
             acts=True,
-            character='@',
+            character=ord('@'),
             color=Color(255, 255, 255)
         )

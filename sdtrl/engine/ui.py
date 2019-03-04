@@ -74,9 +74,7 @@ class UI:
         )
         self.console: tcod.tcod.console.Console = None
         self.game: BaseGame = game
-        self.memory: Map[List[MemorizedCell]] = Map(
-            self.game.world.map.width, self.game.world.map.height
-        )
+        self.memory: Map[List[MemorizedCell]] = None
         self.state = GameState.SPLASH
         self._end_credits = False
         self._selected_option_index = 0
@@ -128,7 +126,7 @@ class UI:
         """
         # Defaults, if there is nothing in the cell
         memorized_tile_name = None
-        ch: str = ' '
+        ch: int = ord(' ')
         fg_color: tcod.Color = self.default_fg_color
         bg_color: tcod.Color = self.default_bg_color
 
@@ -136,19 +134,23 @@ class UI:
             cell: CellContents = self.game.world @ (x, y)
             if cell.tile:
                 memorized_tile_name = cell.tile.name
+                if cell.tile.fg_color:
+                    fg_color = cell.tile.fg_color
                 if cell.tile.bg_color:
                     bg_color = cell.tile.bg_color
                 if cell.tile.character:
-                    ch = ord(cell.tile.character)
+                    ch = cell.tile.character
             for entity in cell.entities:
                 if entity.character:
                     # We don't set `ch` here, because we don't want to
                     # memorize entities.
-                    self.console.ch[x, y] = ord(entity.character)
+                    self.console.ch[x, y] = entity.character
                     if entity.color:
                         fg_color = entity.color
                     break
-            self.memory[x][y] = MemorizedCell(ch,
+            else:
+                self.console.ch[x, y] = ch
+            self.memory[y][x] = MemorizedCell(ch,
                                               fg_color * 0.5,
                                               bg_color * 0.5,
                                               memorized_tile_name)
@@ -291,7 +293,14 @@ class UI:
 
     def start_game(self):
         self.console.clear()
+        self.game.start_game()
+        self.memory = Map(
+            self.game.world.map.width, self.game.world.map.height
+        )
         self.state = GameState.GAME
+
+    def prewarm_memory(self):
+        ...
 
     @staticmethod
     def close_window():

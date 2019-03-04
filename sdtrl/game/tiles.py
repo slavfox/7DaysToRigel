@@ -14,33 +14,5 @@
 #
 # You should have received a copy of the GNU General Public License along
 # with 7 Days to Rigel.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
-from typing import Union
-
-import tcod
-
-from engine import BaseGame, SplashScreen, Color
-from .world import World
-from .entities import Player
-from .ui import UI
-
-
-class SevenDaysToRigel(BaseGame):
-    UI_CLASS = UI
-    WORLD_CLASS = World
-    WORLD_HEIGHT = 50
-    WORLD_WIDTH = 80
-
-    def init_world(self):
-        self.world.generate_map()
-        self.player = self.create_player_character()
-        self.world.entities.append(self.player)
-
-    def create_player_character(self) -> Player:
-        return Player(
-            location=(self.world.map.width//2, self.world.map.height//2)
-        )
-
-    def handle_keypress(self, key: Union[tcod.Key, None]):
-        pass  # ToDo
+from engine import Tile
 

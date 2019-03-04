@@ -74,16 +74,24 @@ class BaseGame(ABC):
     """
     __slots__ = ['console', 'world', 'ui', 'player']
     UI_CLASS: Type[UI] = UI
+    WORLD_CLASS: Type[BaseWorld] = None
+    WORLD_WIDTH: int = 80
+    WORLD_HEIGHT: int = 50
 
     def __init__(self):
-        self.world: BaseWorld = self.make_world()
-        self.player: Entity = self.create_player_character()
-        self.world.entities.append(self.player)
+        self.world: BaseWorld = None
+        self.player: Entity = None
         self.ui: UI = self.UI_CLASS(self)
         self.console: tcod.tcod.console.Console = self.ui.init_root()
 
+    def start_game(self):
+        self.world = self.WORLD_CLASS(
+            self.WORLD_WIDTH, self.WORLD_HEIGHT
+        )
+        self.init_world()
+
     @abstractmethod
-    def make_world(self) -> BaseWorld:
+    def init_world(self):
         """
         Create and initialize the game world.
         """

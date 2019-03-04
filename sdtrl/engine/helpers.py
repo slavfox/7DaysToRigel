@@ -105,7 +105,10 @@ class Map(list):
     def __init__(self,
                  width: int,
                  height: int):
-        super().__init__([[None] * height] * width)
+        map_ = [] * height
+        for y in range(height):
+            map_.append([None] * width)
+        super().__init__(map_)
         self.width = width
         self.height = height
 
@@ -113,7 +116,19 @@ class Map(list):
         """
         Lets us do `map @ (x, y)` for prettiness
         """
-        return self[coords[0]][coords[1]]
+        return self[coords[1]][coords[0]]
+
+    def __repr__(self):
+        return "\n".join(
+            "".join(
+                (chr(tile.character) if tile.character else ' ')
+                if tile else '_'
+                for tile in row)
+            for row in self
+        )
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class Point(list):
@@ -180,7 +195,7 @@ class MemorizedCell(NamedTuple):
     """
     A memorized cell, for drawing no-longer-visible tiles.
     """
-    ch: str
+    ch: int
     fg: Color
     bg: Color
     name: Optional[str]

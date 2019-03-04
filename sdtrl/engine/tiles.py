@@ -15,13 +15,11 @@
 # You should have received a copy of the GNU General Public License along
 # with 7 Days to Rigel.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from abc import ABC
-from typing import TYPE_CHECKING, Collection
-if TYPE_CHECKING:
-    import tcod
+from typing import Collection
+import tcod
 
 
-class Tile(ABC):
+class Tile:
     __slots__ = [
         'character',
         'fg_color',
@@ -33,6 +31,8 @@ class Tile(ABC):
 
         'name',
         'description',
+        'type',
+        'room'
     ]
 
     def __init__(self,
@@ -40,16 +40,17 @@ class Tile(ABC):
                  name: str,
                  description: str,
                  # Functionality
-                 available_actions: Collection = (),
+                 available_actions: Collection[str] = (),
                  walkable: bool = False,
                  blocks_sight: bool = False,
                  # Visuals
-                 character: str = None,
+                 character: int = None,
                  fg_color: tcod.Color = None,
-                 bg_color: tcod.Color = None):
+                 bg_color: tcod.Color = None,
+                 room: str = None):
         # Functionality
         self.available_actions = available_actions
-        self.walkable = walkable,
+        self.walkable = walkable
         self.blocks_sight = blocks_sight
 
         # Fluff
@@ -58,8 +59,28 @@ class Tile(ABC):
         # bloodstained/normal floors).
         self.name = name
         self.description = description
+        self.room = room
 
         # Visuals
         self.character = character
         self.fg_color = fg_color
         self.bg_color = bg_color
+
+    # noinspection PyProtectedMember
+    def __copy__(self):
+        return Tile(
+            self.name,
+            self.description,
+            list(self.available_actions),
+            self.walkable,
+            self.blocks_sight,
+            self.character,
+            tcod.Color._new_from_cdata(self.fg_color),
+            tcod.Color._new_from_cdata(self.bg_color)
+        )
+
+    def copy(self):
+        return self.__copy__()
+
+    def __str__(self):
+        return chr(self.character) if self.character else ' '
